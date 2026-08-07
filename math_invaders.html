@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Invaders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add Mediapipe Hand Tracking Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Press Start 2P', cursive;
+            user-select: none;
+            touch-action: none; /* Prevent default touch actions like scrolling */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            display: block;
+            image-rendering: pixelated; /* Essential for retro look */
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let clicks pass through to canvas if needed */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hud-text {
+            text-shadow: 2px 2px 0px #000;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 600px) {
+            .hud-text {
+                font-size: 0.8rem;
+            }
+        }
+
+        #math-problem-container {
+            position: absolute;
+            bottom: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background-color: rgba(0, 20, 0, 0.8);
+            border: 2px solid #0f0;
+            padding: 15px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        #math-problem {
+            font-size: 2rem;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .btn {
+            background-color: transparent;
+            color: #0f0;
+            border: 3px solid #0f0;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-top: 30px;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 10px #0f0 inset, 0 0 10px #0f0;
+        }
+
+        .btn:hover {
+            background-color: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0 inset, 0 0 20px #0f0;
+            transform: scale(1.05);
+        }
+
+        .title-text {
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 0 10px #0f0, 0 0 20px #0f0;
+            line-height: 1.5;
+        }
+        
+        .subtitle-text {
+            font-size: 1rem;
+            text-align: center;
+            color: #aaa;
+            max-width: 600px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        /* Mobile controls */
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 15;
+        }
+        
+        @media (min-width: 768px) {
+            #mobile-controls {
+                display: none;
+            }
+        }
+        
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #0f0;
+            color: #0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            user-select: none;
+        }
+        
+        .control-btn:active {
+            background: rgba(0, 255, 0, 0.5);
+        }
+        
+        .d-pad {
+            display: flex;
+            gap: 20px;
+        }
+        
+        /* Audio Toggle Button */
+        #audio-toggle {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            z-index: 15;
+            background: rgba(0, 20, 0, 0.8);
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem;
+        }
+        
+        #audio-toggle:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="scanlines"></div>
+    
+    <!-- Audio Toggle -->
+    <button id="audio-toggle">SOUND: ON</button>
+    
+    <!-- Webcam element for Hand Tracking (Hidden) -->
+    <video id="webcam" autoplay playsinline style="display:none;"></video>
+    
+    <!-- Camera Status -->
+    <div id="camera-status" style="position: absolute; top: 70px; left: 20px; color: #ff0; z-index: 15; font-size: 0.8rem; text-shadow: 2px 2px 0 #000;">CAMERA: INIT...</div>
+
+    <!-- Heads Up Display -->
+    <div id="ui-layer">
+        <div class="flex justify-between w-full">
+            <div class="hud-text">SCORE: <span id="score-val">0</span></div>
+            <div class="hud-text">LEVEL: <span id="level-val">1</span></div>
+            <div class="hud-text text-red-500">LIVES: <span id="lives-val">3</span></div>
+        </div>
+    </div>
+
+    <!-- Active Math Problem -->
+    <div id="math-problem-container">
+        <div class="text-sm text-green-400 mb-2">TARGET</div>
+        <div id="math-problem">? + ?</div>
+    </div>
+    
+    <!-- Mobile Controls -->
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <div class="control-btn" id="btn-left">&lt;</div>
+            <div class="control-btn" id="btn-right">&gt;</div>
+        </div>
+        <div class="control-btn" id="btn-shoot">O</div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="overlay">
+        <h1 class="title-text">MATH<br>INVADERS</h1>
+        <p class="subtitle-text">Solve the math equation by shooting the alien holding the correct answer.</p>
+        <p class="text-green-500 mb-8 text-sm text-center">Controls: Arrow Keys to move, Space to shoot.<br>Touch controls available on mobile.</p>
+        <button id="start-btn" class="btn">START MISSION</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="overlay hidden">
+        <h1 class="title-text text-red-500" style="text-shadow: 0 0 10px #f00, 0 0 20px #f00;">GAME OVER</h1>
+        <div class="hud-text mb-4">FINAL SCORE: <span id="final-score">0</span></div>
+        <div class="hud-text mb-8">LEVEL REACHED: <span id="final-level">1</span></div>
+        <button id="restart-btn" class="btn">PLAY AGAIN</button>
+    </div>
+    
+    <!-- Level Up Screen -->
+    <div id="level-up-screen" class="overlay hidden">
+        <h1 class="title-text text-yellow-400" style="text-shadow: 0 0 10px #ff0, 0 0 20px #ff0;">LEVEL UP!</h1>
+        <div class="hud-text mb-4">Math difficulty increased.</div>
+        <div class="hud-text mb-8">Speed increased.</div>
+        <button id="next-level-btn" class="btn">CONTINUE</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // UI Elements
+    const scoreEl = document.getElementById('score-val');
+    const levelEl = document.getElementById('level-val');
+    const livesEl = document.getElementById('lives-val');
+    const problemEl = document.getElementById('math-problem');
+    
+    const startScreen = document.getElementById('start-screen');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    const levelUpScreen = document.getElementById('level-up-screen');
+    const audioToggleBtn = document.getElementById('audio-toggle');
+    
+    // Resize canvas
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Game State
+    let gameState = 'START'; // START, PLAYING, LEVEL_UP, GAME_OVER
+    let score = 0;
+    let level = 1;
+    let lives = 3;
+    let animationId;
+    let lastTime = 0;
+    
+    // Math Logic
+    let currentProblem = { expression: '', answer: 0 };
+    let possibleAnswers = [];
+    
+    // Entities
+    let player;
+    let bullets = [];
+    let aliens = [];
+    let particles = [];
+    let stars = [];
+    
+    // Audio Context and Synth
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        // Browsers start audio context in a 'suspended' state. Must resume on user action.
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+    
+    audioToggleBtn.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        audioToggleBtn.innerText = `SOUND: ${soundEnabled ? 'ON' : 'OFF'}`;
+        if (soundEnabled && !audioCtx) initAudio();
+    });
+
+    // Procedural 8-bit style sound synthesis
+    function playSound(type) {
+        if (!soundEnabled) return;
+        initAudio();
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        
+        switch(type) {
+            case 'shoot':
+                // Classic pew pew
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(110, now + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                
+                osc.start(now);
+                osc.stop(now + 0.1);
+                break;
+                
+            case 'hit_alien':
+                // High pitch crunch
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.2);
+                
+                // Add noise for explosion feel
+                const bufferSize = audioCtx.sampleRate * 0.2;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                // Lowpass filter for the noise
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1000;
+                
+                noise.connect(filter);
+                filter.connect(gainNode);
+                
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                
+                osc.start(now);
+                noise.start(now);
+                osc.stop(now + 0.2);
+                break;
+                
+            case 'wrong_answer':
+                // Harsh low buzz
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.3);
+                
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                
+                osc.start(now);
+                osc.stop(now + 0.3);
+                break;
+                
+            case 'damage':
+                // Big explosion
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(10, now + 0.5);
+                
+                // Add noise
+                const dmgBufferSize = audioCtx.sampleRate * 0.5;
+                const dmgBuffer = audioCtx.createBuffer(1, dmgBufferSize, audioCtx.sampleRate);
+                const dmgData = dmgBuffer.getChannelData(0);
+                for (let i = 0; i < dmgBufferSize; i++) {
+                    dmgData[i] = Math.random() * 2 - 1;
+                }
+                const dmgNoise = audioCtx.createBufferSource();
+                dmgNoise.buffer = dmgBuffer;
+                
+                // Bandpass filter
+                const dmgFilter = audioCtx.createBiquadFilter();
+                dmgFilter.type = 'bandpass';
+                dmgFilter.frequency.value = 400;
+                
+                dmgNoise.connect(dmgFilter);
+                dmgFilter.connect(gainNode);
+
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                
+                osc.start(now);
+                dmgNoise.start(now);
+                osc.stop(now + 0.5);
+                break;
+                
+            case 'level_up':
+                // Happy arpeggio
+                osc.type = 'square';
+                
+                osc.frequency.setValueAtTime(440, now); // A4
+                osc.frequency.setValueAtTime(554.37, now + 0.1); // C#5
+                osc.frequency.setValueAtTime(659.25, now + 0.2); // E5
+                osc.frequency.setValueAtTime(880, now + 0.3); // A5
+                
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0.1, now + 0.3);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                
+                osc.start(now);
+                osc.stop(now + 0.6);
+                break;
+        }
+    }
+
+    // Input state
+    const keys = {
+        ArrowLeft: false,
+        ArrowRight: false,
+        Space: false
+    };
+
+    // Event Listeners for Keyboard
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
+        if (e.code === 'ArrowRight') keys.ArrowRight = true;
+        if (e.code === 'Space') {
+            keys.Space = true;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
+        if (e.code === 'ArrowRight') keys.ArrowRight = false;
+        if (e.code === 'Space') keys.Space = false;
+    });
+    
+    // Touch Controls
+    const btnLeft = document.getElementById('btn-left');
+    const btnRight = document.getElementById('btn-right');
+    const btnShoot = document.getElementById('btn-shoot');
+    
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
+    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowLeft = false; });
+    
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
+    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowRight = false; });
+    
+    btnShoot.addEventListener('touchstart', (e) => { 
+        e.preventDefault(); 
+        keys.Space = true;
+    });
+    btnShoot.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        keys.Space = false;
+    });
+
+    // Button Listeners
+    document.getElementById('start-btn').addEventListener('click', startGame);
+    document.getElementById('restart-btn').addEventListener('click', startGame);
+    document.getElementById('next-level-btn').addEventListener('click', startLevel);
+
+    // Classes
+    class Player {
+        constructor() {
+            this.width = 40;
+            this.height = 30;
+            this.x = canvas.width / 2 - this.width / 2;
+            this.y = canvas.height - this.height - 100; // Position above mobile controls
+            this.speed = 400; // pixels per second
+            this.color = '#0f0';
+            this.lastShot = 0;
+            this.fireRate = 400; // ms between shots
+            this.isHit = false;
+            this.hitTimer = 0;
+        }
+
+        update(dt) {
+            // Movement (Prioritize hand tracking if active, else keyboard)
+            if (handsActive && targetX !== null) {
+                // Smoothly follow the hand position
+                this.x += (targetX - this.x) * 0.15;
+            } else {
+                if (keys.ArrowLeft) this.x -= this.speed * (dt / 1000);
+                if (keys.ArrowRight) this.x += this.speed * (dt / 1000);
+            }
+
+            // Shoot action
+            if (keys.Space && gameState === 'PLAYING') {
+                this.shoot();
+            }
+
+            // Boundaries
+            if (this.x < 0) this.x = 0;
+            if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+            
+            // Hit effect
+            if (this.isHit) {
+                this.hitTimer -= dt;
+                if (this.hitTimer <= 0) this.isHit = false;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // Blink if hit
+            if (this.isHit && Math.floor(Date.now() / 100) % 2 === 0) {
+                ctx.fillStyle = '#f00';
+            } else {
+                ctx.fillStyle = this.color;
+            }
+
+            // Draw basic ship (pixel art style approximation)
+            // Base
+            ctx.fillRect(0, 20, 40, 10);
+            // Middle
+            ctx.fillRect(10, 10, 20, 10);
+            // Top gun
+            ctx.fillRect(18, 0, 4, 10);
+
+            ctx.restore();
+        }
+
+        shoot() {
+            const now = Date.now();
+            if (now - this.lastShot > this.fireRate && !this.isHit) {
+                bullets.push(new Bullet(this.x + this.width / 2, this.y));
+                this.lastShot = now;
+                createParticles(this.x + this.width / 2, this.y, 5, this.color, 2); // Muzzle flash
+                playSound('shoot');
+            }
+        }
+    }
+
+    class Bullet {
+        constructor(x, y) {
+            this.x = x - 2;
+            this.y = y;
+            this.width = 4;
+            this.height = 15;
+            this.speed = 600; // pixels per second
+            this.color = '#fff';
+            this.markedForDeletion = false;
+        }
+
+        update(dt) {
+            this.y -= this.speed * (dt / 1000);
+            if (this.y < 0) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+
+    class Alien {
+        constructor(x, y, number, isCorrect) {
+            this.x = x;
+            this.y = y;
+            this.width = 40;
+            this.height = 40;
+            
+            // Scaling difficulty based on level
+            const baseSpeed = 30 + (level * 10);
+            this.speedX = baseSpeed * (Math.random() > 0.5 ? 1 : -1);
+            this.speedY = 10 + (level * 2);
+            
+            this.color = '#f0f'; // ALL aliens are now uniform magenta
+            this.number = number;
+            this.isCorrect = isCorrect;
+            this.markedForDeletion = false;
+            
+            // Animation properties
+            this.animTimer = 0;
+            this.frame = 0;
+        }
+
+        update(dt) {
+            this.x += this.speedX * (dt / 1000);
+            this.y += this.speedY * (dt / 1000);
+
+            // Bounce off walls
+            if (this.x <= 0 || this.x + this.width >= canvas.width) {
+                this.speedX *= -1;
+                this.y += 20; // Drop down slightly on wall hit
+            }
+            
+            // Reached bottom
+            if (this.y + this.height > canvas.height - 150) {
+                this.markedForDeletion = true;
+                playerTakesDamage();
+            }
+            
+            // Animation
+            this.animTimer += dt;
+            if (this.animTimer > 500) {
+                this.frame = this.frame === 0 ? 1 : 0;
+                this.animTimer = 0;
+            }
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            ctx.fillStyle = this.color;
+            
+            // Draw retro alien shape (varies slightly by frame)
+            if (this.frame === 0) {
+                // Frame 1
+                ctx.fillRect(8, 0, 24, 8); // top
+                ctx.fillRect(0, 8, 40, 16); // middle
+                ctx.fillRect(0, 24, 8, 8); // left arm
+                ctx.fillRect(32, 24, 8, 8); // right arm
+                ctx.fillRect(8, 32, 8, 8); // left leg
+                ctx.fillRect(24, 32, 8, 8); // right leg
+            } else {
+                // Frame 2
+                ctx.fillRect(8, 0, 24, 8); // top
+                ctx.fillRect(0, 8, 40, 16); // middle
+                ctx.fillRect(8, 24, 8, 8); // inner left arm
+                ctx.fillRect(24, 24, 8, 8); // inner right arm
+                ctx.fillRect(0, 32, 8, 8); // outer left leg
+                ctx.fillRect(32, 32, 8, 8); // outer right leg
+            }
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            ctx.fillRect(8, 10, 8, 4);
+            ctx.fillRect(24, 10, 8, 4);
+
+            // Number (Text)
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            // Draw text shadow for visibility
+            ctx.shadowColor = 'black';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fillText(this.number, 20, -10); // Draw above alien
+
+            ctx.restore();
+        }
+    }
+
+    class Particle {
+        constructor(x, y, color, speedMultiplier = 1) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 4 + 1;
+            this.speedX = (Math.random() * 200 - 100) * speedMultiplier;
+            this.speedY = (Math.random() * 200 - 100) * speedMultiplier;
+            this.color = color;
+            this.life = 1.0; // 1.0 to 0.0
+            this.decay = Math.random() * 0.02 + 0.02;
+            this.markedForDeletion = false;
+        }
+
+        update(dt) {
+            this.x += this.speedX * (dt / 1000);
+            this.y += this.speedY * (dt / 1000);
+            this.life -= this.decay * (dt / 16); // approx frame decay
+            if (this.life <= 0) this.markedForDeletion = true;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+            ctx.restore();
+        }
+    }
+    
+    // Background stars for retro feel
+    class Star {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * 2;
+            this.speed = Math.random() * 50 + 10;
+        }
+        
+        update(dt) {
+            this.y += this.speed * (dt / 1000);
+            if (this.y > canvas.height) {
+                this.y = 0;
+                this.x = Math.random() * canvas.width;
+            }
+        }
+        
+        draw() {
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`;
+            ctx.fillRect(this.x, this.y, this.size, this.size);
+        }
+    }
+
+    // Helper to generate math problems
+    function generateMathProblem() {
+        let num1, num2, operator, answer;
+        
+        // Difficulty scaling
+        let maxNum = 10 + (level * 5);
+        
+        const type = Math.floor(Math.random() * Math.min(3, Math.ceil(level / 2))); // 0: +, 1: -, 2: *
+        
+        switch (type) {
+            case 0: // Addition
+                num1 = Math.floor(Math.random() * maxNum) + 1;
+                num2 = Math.floor(Math.random() * maxNum) + 1;
+                operator = '+';
+                answer = num1 + num2;
+                break;
+            case 1: // Subtraction
+                // Ensure positive answers for simplicity initially
+                num1 = Math.floor(Math.random() * maxNum) + 5;
+                num2 = Math.floor(Math.random() * num1) + 1;
+                operator = '-';
+                answer = num1 - num2;
+                break;
+            case 2: // Multiplication (appears later)
+                let multiMax = Math.min(12, 3 + level);
+                num1 = Math.floor(Math.random() * multiMax) + 2;
+                num2 = Math.floor(Math.random() * multiMax) + 2;
+                operator = 'x';
+                answer = num1 * num2;
+                break;
+            default:
+                num1 = 1; num2 = 1; operator = '+'; answer = 2;
+        }
+        
+        currentProblem.expression = `${num1} ${operator} ${num2}`;
+        currentProblem.answer = answer;
+        problemEl.textContent = currentProblem.expression;
+        
+        generateAliens();
+    }
+
+    function generateAliens() {
+        aliens = [];
+        
+        // Generate possible answers: 1 correct, others wrong but close
+        possibleAnswers = [currentProblem.answer];
+        
+        // Number of aliens increases with level, max 6
+        const numAliens = Math.min(6, 3 + Math.floor(level / 2));
+        
+        while (possibleAnswers.length < numAliens) {
+            let offset = Math.floor(Math.random() * 10) - 5;
+            if (offset === 0) offset = 1;
+            let wrongAnswer = currentProblem.answer + offset;
+            
+            // Ensure no negative answers or duplicates
+            if (wrongAnswer >= 0 && !possibleAnswers.includes(wrongAnswer)) {
+                possibleAnswers.push(wrongAnswer);
+            }
+        }
+        
+        // Shuffle answers
+        possibleAnswers.sort(() => Math.random() - 0.5);
+        
+        // Spawn aliens spread across top
+        const spacing = canvas.width / (numAliens + 1);
+        
+        possibleAnswers.forEach((ans, index) => {
+            const isCorrect = ans === currentProblem.answer;
+            const x = spacing * (index + 1) - 20; // center slightly
+            const y = 50 + Math.random() * 50; // slightly staggered start y
+            aliens.push(new Alien(x, y, ans, isCorrect));
+        });
+    }
+
+    function createParticles(x, y, count, color, speedMul = 1) {
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle(x, y, color, speedMul));
+        }
+    }
+
+    function initStars() {
+        stars = [];
+        for (let i = 0; i < 50; i++) {
+            stars.push(new Star());
+        }
+    }
+
+    function playerTakesDamage() {
+        if (player.isHit) return;
+        
+        playSound('damage');
+        lives--;
+        updateUI();
+        
+        player.isHit = true;
+        player.hitTimer = 1000; // Invulnerable for 1s
+        
+        createParticles(player.x + player.width/2, player.y + player.height/2, 30, '#f00', 3);
+        
+        // Flash screen red
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        if (lives <= 0) {
+            endGame();
+        } else {
+            // Need a new problem if aliens got past
+            setTimeout(() => {
+                if(gameState === 'PLAYING') generateMathProblem();
+            }, 1000);
+        }
+    }
+    
+    function wrongAnswerHit(alien) {
+        // Punish for shooting wrong answer
+        playSound('wrong_answer');
+        score = Math.max(0, score - 50);
+        updateUI();
+        createParticles(alien.x + alien.width/2, alien.y + alien.height/2, 20, '#f00');
+        
+        // Visual feedback for wrong (red text flash over problem)
+        problemEl.style.color = '#f00';
+        setTimeout(() => problemEl.style.color = '#fff', 500);
+    }
+    
+    function correctAnswerHit(alien) {
+        playSound('hit_alien');
+        score += 100 * level;
+        updateUI();
+        createParticles(alien.x + alien.width/2, alien.y + alien.height/2, 40, '#0f0', 2);
+        
+        // Clear remaining aliens
+        aliens.forEach(a => a.markedForDeletion = true);
+        
+        // Visual feedback for right (green text flash over problem)
+        problemEl.style.color = '#0f0';
+        setTimeout(() => problemEl.style.color = '#fff', 500);
+        
+        // Check for level up every 5 correct answers
+        if (score > 0 && score % (500 * level) === 0) {
+            triggerLevelUp();
+        } else {
+            // Generate next problem after a short delay
+            setTimeout(() => {
+                if(gameState === 'PLAYING') generateMathProblem();
+            }, 800);
+        }
+    }
+
+    function updateUI() {
+        scoreEl.innerText = score;
+        levelEl.innerText = level;
+        livesEl.innerText = lives;
+    }
+
+    function startGame() {
+        initAudio(); // Initialize audio context on first user interaction
+        startScreen.classList.add('hidden');
+        gameOverScreen.classList.add('hidden');
+        levelUpScreen.classList.add('hidden');
+        
+        score = 0;
+        level = 1;
+        lives = 3;
+        updateUI();
+        
+        player = new Player();
+        bullets = [];
+        particles = [];
+        initStars();
+        
+        gameState = 'PLAYING';
+        lastTime = performance.now();
+        
+        generateMathProblem();
+        
+        if (animationId) cancelAnimationFrame(animationId);
+        gameLoop(lastTime);
+    }
+
+    function triggerLevelUp() {
+        playSound('level_up');
+        gameState = 'LEVEL_UP';
+        level++;
+        updateUI();
+        levelUpScreen.classList.remove('hidden');
+    }
+
+    function startLevel() {
+        levelUpScreen.classList.add('hidden');
+        gameState = 'PLAYING';
+        bullets = [];
+        player.x = canvas.width / 2 - player.width / 2;
+        lastTime = performance.now();
+        generateMathProblem();
+        gameLoop(lastTime);
+    }
+
+    function endGame() {
+        gameState = 'GAME_OVER';
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('final-level').innerText = level;
+        gameOverScreen.classList.remove('hidden');
+    }
+
+    function checkCollisions() {
+        bullets.forEach(bullet => {
+            aliens.forEach(alien => {
+                // AABB Collision
+                if (!bullet.markedForDeletion && !alien.markedForDeletion &&
+                    bullet.x < alien.x + alien.width &&
+                    bullet.x + bullet.width > alien.x &&
+                    bullet.y < alien.y + alien.height &&
+                    bullet.height + bullet.y > alien.y) {
+                    
+                    bullet.markedForDeletion = true;
+                    alien.markedForDeletion = true;
+                    
+                    if (alien.isCorrect) {
+                        correctAnswerHit(alien);
+                    } else {
+                        wrongAnswerHit(alien);
+                    }
+                }
+            });
+        });
+        
+        // Alien collision with player
+        aliens.forEach(alien => {
+            if (!alien.markedForDeletion && !player.isHit &&
+                alien.x < player.x + player.width &&
+                alien.x + alien.width > player.x &&
+                alien.y < player.y + player.height &&
+                alien.height + alien.y > player.y) {
+                    
+                alien.markedForDeletion = true;
+                playerTakesDamage();
+            }
+        });
+    }
+
+    function gameLoop(currentTime) {
+        if (gameState !== 'PLAYING') return;
+
+        const dt = currentTime - lastTime;
+        lastTime = currentTime;
+
+        // Clear canvas with a slight trail effect
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update & Draw Stars
+        stars.forEach(star => {
+            star.update(dt);
+            star.draw();
+        });
+
+        // Update & Draw Player
+        if (player) {
+            player.update(dt);
+            player.draw();
+        }
+
+        // Update & Draw Bullets
+        bullets.forEach(b => b.update(dt));
+        bullets = bullets.filter(b => !b.markedForDeletion);
+        bullets.forEach(b => b.draw());
+
+        // Update & Draw Aliens
+        aliens.forEach(a => a.update(dt));
+        aliens = aliens.filter(a => !a.markedForDeletion);
+        aliens.forEach(a => a.draw());
+
+        // Update & Draw Particles
+        particles.forEach(p => p.update(dt));
+        particles = particles.filter(p => !p.markedForDeletion);
+        particles.forEach(p => p.draw());
+
+        // Collisions
+        checkCollisions();
+
+        // Draw HUD separator line
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 60);
+        ctx.lineTo(canvas.width, 60);
+        ctx.stroke();
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+    
+    // Initial draw to show stars behind start screen
+    initStars();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    stars.forEach(s => s.draw());
+
+    // --- Mediapipe Hand Tracking Initialization ---
+    const videoElement = document.getElementById('webcam');
+    const cameraStatus = document.getElementById('camera-status');
+    let targetX = null;
+    let handsActive = false;
+
+    const hands = new Hands({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+    }});
+    
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    
+    hands.onResults((results) => {
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            handsActive = true;
+            cameraStatus.innerText = "CAMERA: TRACKING HAND";
+            cameraStatus.style.color = "#0f0";
+            
+            const landmarks = results.multiHandLandmarks[0];
+            
+            // Map the palm center (landmark 9) to the X position of the player
+            // X is mirrored (1.0 - x) for a natural mirror-like feel
+            const normalizedX = 1.0 - landmarks[9].x;
+            targetX = normalizedX * (canvas.width - 40); // 40 is player width
+            
+            // Detect "Shoot" Gesture: Index finger pointing up, other 3 fingers folded down
+            // Smaller Y value means higher on the screen
+            const indexUp = landmarks[8].y < landmarks[6].y;
+            const middleDown = landmarks[12].y > landmarks[10].y;
+            const ringDown = landmarks[16].y > landmarks[14].y;
+            const pinkyDown = landmarks[20].y > landmarks[18].y;
+            
+            if (indexUp && middleDown && ringDown && pinkyDown) {
+                keys.Space = true;
+            } else {
+                keys.Space = false;
+            }
+        } else {
+            handsActive = false;
+            cameraStatus.innerText = "CAMERA: NO HAND DETECTED";
+            cameraStatus.style.color = "#ff0";
+            keys.Space = false; // Stop shooting if hand leaves frame
+        }
+    });
+    
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await hands.send({image: videoElement});
+        },
+        width: 640,
+        height: 480
+    });
+    
+    camera.start().then(() => {
+        cameraStatus.innerText = "CAMERA: READY";
+    }).catch(err => {
+        cameraStatus.innerText = "CAMERA: ERROR/DENIED";
+        cameraStatus.style.color = "#f00";
+        console.error("Camera access denied or failed: ", err);
+    });
+
+</script>
+</body>
+</html>
