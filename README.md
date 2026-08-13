@@ -12,7 +12,7 @@ A retro Space Invaders–style game that blends arcade shooting with arithmetic 
 Play it at: [https://drhycheung.github.io/MathInvaders](https://drhycheung.github.io/MathInvaders)
 
 ## 🎮 Gameplay
-- A math expression (e.g. `? + ?`) is shown at the top of the screen
+- A math expression (e.g. `? + ?`) is shown at the bottom of the screen
 - Aliens descend carrying different answer values
 - Shoot the alien with the **correct answer** to score
 - Answering wrong (or letting an alien through) costs points/health
