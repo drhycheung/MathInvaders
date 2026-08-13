@@ -2,6 +2,10 @@
 
 A retro Space Invaders–style game that blends arcade shooting with arithmetic practice. A math problem appears at the top of the screen — shoot the alien holding the correct answer to progress.
 
+## 📸 Screenshot
+
+![Math Invaders gameplay](MathInvaders.png)
+
 ## 🔗 Live Site
 Play it at: [https://drhycheung.github.io/MathInvaders](https://drhycheung.github.io/MathInvaders)
 
