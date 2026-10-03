@@ -2,13 +2,13 @@
 
 **Live demo (GitHub Pages): https://drhycheung.github.io/MathInvaders/**
 
-![Math Invaders home](Home.png)
+![Math Invaders home](docs/screenshot.png)
 
-![Math Invaders gameplay](MathInvaders.png)
+![Math Invaders gameplay](docs/gameplay.png)
 
 A retro Space Invaders–style game that blends arcade shooting with arithmetic practice. A math problem appears at the bottom of the screen — shoot the alien holding the correct answer to progress. Built as a single-file, front-end-only EdTech demo for classroom discussion on motivation and game-based learning.
 
-File: `index.html` — no build step, no backend. Open it in a browser or deploy to GitHub Pages.
+File: `index.html` — no build step, no backend, no API key. Open it in a browser or deploy to GitHub Pages. MediaPipe, Tailwind and the pixel font load from CDNs; everything else runs locally.
 
 ---
 
@@ -84,9 +84,10 @@ Desktop and mobile are supported. Hand tracking requires a webcam and works best
 
 ## 7. Licences and attribution
 
-- Built with [MediaPipe Hands](https://developers.google.com/mediapipe/solutions/vision/hand_landmarker) by Google.
-- Styled with [Tailwind CSS](https://tailwindcss.com).
-- Game concept inspired by the classic Space Invaders arcade game.
-- Hosted on [GitHub Pages](https://pages.github.com).
+- **Code**: MIT — see [LICENSE](LICENSE), © 2026 drhycheung.
+- **MediaPipe Hands**: © Google, licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+- **Tailwind CSS**: MIT licensed, loaded via the Tailwind Play CDN.
+- **Press Start 2P**: font by CodeMan38, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org/).
+- **Game concept**: inspired by the classic Space Invaders arcade game. No original arcade assets are used.
 
-All original code in this repository is available under standard educational use. Attribution appreciated when reusing for teaching.
+The MIT licence above covers this repository's code only and does not extend to the third-party libraries and font, which remain under their own terms.

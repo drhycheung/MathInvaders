@@ -1,64 +1,121 @@
-# Reproducing Math Invaders with vibe coding
+# Reproducing the game with vibe coding
 
-Companion guide to the [main README](../README.md). This is a teaching resource for demonstrating how design thinking and AI-assisted "vibe coding" can be used to address an educational problem: students lack motivation for practising arithmetic.
+Companion guide to the [main README](../README.md). This is the teaching pack for the lesson:
+why the game is designed the way it is, how it was actually built with an AI coding tool, and the
+complete prompt to hand to one.
 
-**Target audience:** Pre-service/in-service teachers exploring EdTech, game-based learning and AI coding tools.
+The guide assumes "vibe coding" — building software by describing intent in natural language,
+iterating conversationally, and inspecting what comes back. For an education audience this is the
+point: a teacher or student can prototype a usable learning tool without deep programming
+expertise, then read, critique and extend the generated code.
+
+**Last verified: 3 October 2026** using OpenCode, and against the deployed page at
+<https://drhycheung.github.io/MathInvaders/>.
+
+## Contents
+
+1. [Design thinking: from an arithmetic drill to a game students return to](#1-design-thinking-from-an-arithmetic-drill-to-a-game-students-return-to)
+2. [How the game was built](#2-how-the-game-was-built)
+3. [Further work for students](#3-further-work-for-students)
+4. [The reproduction prompt](#4-the-reproduction-prompt) ← jump here if you just want to build it
 
 ---
 
-## 1. Design thinking: from problem to solution
+## 1. Design thinking: from an arithmetic drill to a game students return to
 
-The project follows the Stanford d.school design thinking model: empathise, define, ideate, prototype, test.
+The project follows the Stanford d.school design-thinking model — empathise, define, ideate,
+prototype, test — applied to one problem: students do not practise arithmetic enough, because
+drilling feels like a chore.
 
-| Stage | Application to Math Invaders |
+| Stage | This project's arc |
 |---|---|
 | **1. Empathise 同理心** | Many students find repetitive arithmetic drills boring and demotivating. They may disengage, rush through exercises, or avoid practice entirely. Observation: games often hold their attention far longer than worksheets. |
-| **2. Define 定義** | **Problem statement:** *Students lack motivation to practise arithmetic regularly.* **Design goal:** Create an engaging, low-barrier experience that encourages repeated practice of arithmetic without feeling like a drill. Success criterion: students willingly return for "one more round". |
-| **3. Ideate 構思** | Considered approaches: digital flashcards, quizzes with badges, timed challenges, role-playing games. Chose a Space Invaders clone because it's instantly recognisable, has a clear goal (shoot target), creates gentle time pressure, and maps naturally to "select the correct answer". |
-| **4. Prototype 原型** | Built a single-file HTML5 Canvas game with: math problem generator, descending aliens with answer choices, collision detection, scoring/lives, level progression, keyboard/touch controls, and hand-gesture mode via MediaPipe Hands. Kept it self-contained for easy sharing. |
-| **5. Test 測試** | Tested locally and on mobile. Iterated on: difficulty curve, UI readability, mobile controls layout, and feedback clarity. Hand-tracking mode was added to spark discussion about accessibility/alternative inputs. |
+| **2. Define 定義** | **Problem statement:** *students lack motivation to practise arithmetic regularly.* **Design goal:** create an engaging, low-barrier experience that encourages repeated practice without it feeling like a drill. Success criterion: students willingly return for "one more round". |
+| **3. Ideate 構思** | Options considered: digital flashcards, quizzes with badges, timed challenges, role-playing games. The Space Invaders format was chosen because it is instantly recognisable, has a clear goal (shoot the target), creates gentle time pressure, and maps naturally onto "select the correct answer". |
+| **4. Prototype 原型** | A single-file HTML5 Canvas game: a math-problem generator, descending aliens carrying answer choices, collision detection, scoring and lives, level progression, keyboard and touch controls, and a hand-gesture mode via MediaPipe Hands. Kept self-contained for easy sharing. |
+| **5. Test 測試** | Tested locally and on mobile. Iterated on the difficulty curve, UI readability, mobile control layout and feedback clarity. Hand-tracking mode was added to spark discussion about accessibility and alternative inputs. |
 
-### Pedagogical rationale
+The measurable outcome was **repeated voluntary practice**: a student should be able to start a
+round within seconds, see immediately whether an answer was right, and want to play again.
+Motivation is treated as the outcome to be designed for, not as an assumption about students.
 
-- **Game-based learning:** Leverages the motivational pull of games (challenge, autonomy, feedback, progression).
-- **Cognitive load:** Embeds arithmetic practice in a task where math is necessary to progress, not an isolated worksheet item.
-- **Immediate feedback:** Players know instantly if they shot the right alien, reinforcing correct reasoning.
-- **Low stakes, high repetition:** Failure is part of gameplay, reducing anxiety compared to graded drills.
-- **Transferable design:** The "problem + multiple choices + timed action" pattern can be adapted to other subjects (vocabulary, science facts, etc.).
+### Context: why gamification, and where this project fits
 
----
-
-## 2. What is "vibe coding"?
-
-"Vibe coding" refers to using AI coding assistants to build software by describing intent in natural language, iterating conversationally, and accepting/rejecting suggestions. It emphasises:
-- **Idea-first:** Focus on the user/problem and desired experience, not syntax details.
-- **Rapid prototyping:** Go from concept to playable demo quickly.
-- **Iterative refinement:** Test, spot issues, prompt adjustments.
-- **Learning by doing:** Inspect generated code to understand how it works.
-
-For educational contexts, vibe coding democratises creation: teachers and students can prototype EdTech tools without deep programming expertise, then critique and extend the code.
+- **Game-based learning** leverages the motivational pull of games — challenge, autonomy, feedback
+  and progression.
+- **Cognitive load:** arithmetic practice is embedded in a task where maths is necessary to
+  progress, rather than being an isolated worksheet item.
+- **Immediate feedback:** players know instantly whether they shot the right alien, which
+  reinforces correct reasoning.
+- **Low stakes, high repetition:** failure is part of the game, which reduces anxiety compared with
+  graded drills.
+- **Transferable design:** the "problem + multiple choices + timed action" pattern can be adapted
+  to other subjects (vocabulary, science facts, and so on).
 
 ---
 
-## 3. How this project was built with AI
+## 2. How the game was built
 
-This demo was created by describing the desired experience to an AI coding tool and iterating. The process mirrors design thinking:
+The game was built with an AI coding tool and iterated in the browser, with each claim checked
+before it was accepted. The prompt in [Part 4](#4-the-reproduction-prompt) encodes the findings
+below, so that a working game should be produced on the first attempt.
 
-1. **Problem statement first:** "Build a Space Invaders-style game where students shoot the alien with the correct math answer."
-2. **Core mechanics:** Specified canvas, sprites, descending aliens, math problem display, collision detection, scoring, lives, levels.
-3. **Input modes:** Requested keyboard, touch (mobile), and hand-gesture control (MediaPipe Hands).
-4. **UX polish:** Added pixel-art style, HUD, final screen, difficulty progression.
-5. **Single-file constraint:** Requested everything inline (HTML/CSS/JS) for GitHub Pages deployment.
-6. **Testing & refinement:** Ran in browser, identified issues (e.g. scaling on mobile, gesture responsiveness), prompted fixes.
-7. **Documentation:** Generated README and this guide to make it classroom-ready.
+1. **Problem statement first:** "Build a Space Invaders-style game where students shoot the alien
+   with the correct math answer."
+2. **Core mechanics:** specified the canvas, sprites, descending aliens, math-problem display,
+   collision detection, scoring, lives and levels.
+3. **Input modes:** requested keyboard, touch (mobile) and hand-gesture control (MediaPipe Hands).
+4. **UX polish:** added the pixel-art style, HUD, final screen and difficulty progression.
+5. **Single-file constraint:** requested everything inline (HTML/CSS/JS) for GitHub Pages
+   deployment.
+6. **Testing and refinement:** ran the game in a browser, then identified and fixed issues such as
+   mobile scaling and gesture responsiveness.
+7. **Documentation:** generated the README and this guide to make the game classroom-ready.
 
-Key lesson: **The quality of output depends on the quality of the prompt.** Being explicit about constraints (single file, no build, CDN libraries, gameplay rules) prevents common pitfalls.
+The central lesson is that **the quality of the output depends on the quality of the prompt**.
+Being explicit about the constraints — single file, no build step, CDN libraries, gameplay rules —
+prevents most common pitfalls.
+
+### Bugs that measurement caught and looking did not
+
+- **The game looked finished only because the machine was online.** Unlike the other teaching
+  demos in this series, which snapshot their stylesheet into the file, MathInvaders loads
+  everything from a CDN: Tailwind from `cdn.tailwindcss.com`, four MediaPipe scripts from
+  jsDelivr, and the Press Start 2P font from Google Fonts (see `index.html`, `<head>`). On a
+  connected machine the game renders and plays correctly, so nothing appears wrong. Opened offline
+  or on a filtered network, the HUD loses its styling and hand-tracking never initialises, while
+  the game loop still starts — the failure is partial, not a crash, which is what makes it easy to
+  miss. Confirm it by loading the page with all non-document requests blocked: the canvas appears,
+  the overlays are unstyled, and camera mode stays at `CAMERA: ERROR/DENIED`.
+
+> [!IMPORTANT]
+> This is the pedagogical heart of the lesson. The fault produces no error message and a page that
+> looks complete; only someone who tests under a different network condition will find it. The same
+> trap applies to camera permission — the gesture path can be denied silently, so the code must
+> surface the state (as this game does in its camera-status readout) rather than assume success.
 
 ---
 
-## 4. Reproduction prompt
+## 3. Further work for students
 
-Copy and paste this entire prompt into your preferred AI coding assistant (e.g. Claude, Gemini, OpenCode, ChatGPT). It encodes the design rationale, constraints and requirements to reproduce Math Invaders.
+This project is deliberately **not** a research contribution. Gamified arithmetic practice is a
+well-established area, and it is presented here as a teaching baseline, not as an evaluation of
+learning gains.
+
+Students are encouraged to extend it, or to build something adjacent — a different subject,
+age group or interaction mode — so that their work addresses a question that is genuinely not yet
+answered. The limitations in the [main README](../README.md#5-known-limitations) suggest several
+directions; the most direct are to calibrate the difficulty curve against real student performance,
+to add an adaptive problem generator, and to add accessibility alternatives for the purely visual
+game state.
+
+---
+
+## 4. The reproduction prompt
+
+Copy and paste this entire prompt into your preferred AI coding assistant (e.g. Claude, Gemini,
+OpenCode, ChatGPT). It encodes the design rationale, constraints and requirements to reproduce
+Math Invaders.
 
 ```text
 Build a complete, standalone, single-file HTML page (all CSS/JS inline, native ES6 only, no frameworks, no build step) for "Math Invaders", a gamified arithmetic practice game deployable on GitHub Pages.
@@ -118,3 +175,7 @@ The goal is to address students' lack of motivation for practising arithmetic. T
 ## Deliverables
 Return the complete, final code for index.html ready to run and deploy to GitHub Pages. Include the full file content.
 ```
+
+---
+
+Back to the [main README](../README.md).
