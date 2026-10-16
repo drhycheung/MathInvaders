@@ -475,25 +475,37 @@
     }
 
     // Input state
-    const keys = {
+    const keyboardKeys = {
         ArrowLeft: false,
         ArrowRight: false,
+        Space: false
+    };
+    const touchKeys = {
+        ArrowLeft: false,
+        ArrowRight: false,
+        Space: false
+    };
+    const gestureKeys = {
         Space: false
     };
 
     // Event Listeners for Keyboard
     window.addEventListener('keydown', (e) => {
-        if (e.code === 'ArrowLeft') keys.ArrowLeft = true;
-        if (e.code === 'ArrowRight') keys.ArrowRight = true;
-        if (e.code === 'Space') {
-            keys.Space = true;
+        if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Space') {
+            e.preventDefault();
+            keyboardKeys[e.code] = true;
         }
     });
 
     window.addEventListener('keyup', (e) => {
-        if (e.code === 'ArrowLeft') keys.ArrowLeft = false;
-        if (e.code === 'ArrowRight') keys.ArrowRight = false;
-        if (e.code === 'Space') keys.Space = false;
+        if (e.code === 'ArrowLeft' || e.code === 'ArrowRight' || e.code === 'Space') {
+            keyboardKeys[e.code] = false;
+        }
+    });
+    window.addEventListener('blur', () => {
+        keyboardKeys.ArrowLeft = false;
+        keyboardKeys.ArrowRight = false;
+        keyboardKeys.Space = false;
     });
     
     // Touch Controls
@@ -501,20 +513,23 @@
     const btnRight = document.getElementById('btn-right');
     const btnShoot = document.getElementById('btn-shoot');
     
-    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowLeft = true; });
-    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowLeft = false; });
+    btnLeft.addEventListener('touchstart', (e) => { e.preventDefault(); touchKeys.ArrowLeft = true; });
+    btnLeft.addEventListener('touchend', (e) => { e.preventDefault(); touchKeys.ArrowLeft = false; });
+    btnLeft.addEventListener('touchcancel', () => { touchKeys.ArrowLeft = false; });
     
-    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); keys.ArrowRight = true; });
-    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); keys.ArrowRight = false; });
+    btnRight.addEventListener('touchstart', (e) => { e.preventDefault(); touchKeys.ArrowRight = true; });
+    btnRight.addEventListener('touchend', (e) => { e.preventDefault(); touchKeys.ArrowRight = false; });
+    btnRight.addEventListener('touchcancel', () => { touchKeys.ArrowRight = false; });
     
     btnShoot.addEventListener('touchstart', (e) => { 
         e.preventDefault(); 
-        keys.Space = true;
+        touchKeys.Space = true;
     });
     btnShoot.addEventListener('touchend', (e) => {
         e.preventDefault();
-        keys.Space = false;
+        touchKeys.Space = false;
     });
+    btnShoot.addEventListener('touchcancel', () => { touchKeys.Space = false; });
 
     // Button Listeners
     document.getElementById('start-btn').addEventListener('click', startGame);
@@ -537,17 +552,18 @@
         }
 
         update(dt) {
-            // Movement (Prioritize hand tracking if active, else keyboard)
-            if (handsActive && targetX !== null) {
+            // Manual movement takes priority while held; otherwise follow the tracked hand.
+            const movingLeft = keyboardKeys.ArrowLeft || touchKeys.ArrowLeft;
+            const movingRight = keyboardKeys.ArrowRight || touchKeys.ArrowRight;
+            if (movingLeft || movingRight) {
+                this.x += (Number(movingRight) - Number(movingLeft)) * this.speed * (dt / 1000);
+            } else if (handsActive && targetX !== null) {
                 // Smoothly follow the hand position
                 this.x += (targetX - this.x) * 0.15;
-            } else {
-                if (keys.ArrowLeft) this.x -= this.speed * (dt / 1000);
-                if (keys.ArrowRight) this.x += this.speed * (dt / 1000);
             }
 
             // Shoot action
-            if (keys.Space && gameState === 'PLAYING') {
+            if ((keyboardKeys.Space || touchKeys.Space || gestureKeys.Space) && gameState === 'PLAYING') {
                 this.shoot();
             }
 
@@ -1098,15 +1114,15 @@
             const pinkyDown = landmarks[20].y > landmarks[18].y;
             
             if (indexUp && middleDown && ringDown && pinkyDown) {
-                keys.Space = true;
+                gestureKeys.Space = true;
             } else {
-                keys.Space = false;
+                gestureKeys.Space = false;
             }
         } else {
             handsActive = false;
             cameraStatus.innerText = "CAMERA: NO HAND DETECTED";
             cameraStatus.style.color = "#ff0";
-            keys.Space = false; // Stop shooting if hand leaves frame
+            gestureKeys.Space = false; // Stop shooting if hand leaves frame
         }
     });
     
