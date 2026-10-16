@@ -56,7 +56,7 @@ This project turns abstract number practice into a fast-paced arcade task (shoot
 
 - **Locally (no server needed):** Double-click `index.html` in any modern browser.
 - **Locally with server:** `python3 -m http.server 8000` then open `http://localhost:8000/`. Useful if you prefer serving over HTTP.
-- **GitHub Pages (your own deployment):** Push `index.html` and images to your GitHub repository, then enable Pages via **Settings → Pages → Deploy from a branch** (select branch and `/ (root)`). Your game will be live at `https://<your-username>.github.io/<repo-name>/`.
+- **GitHub Pages:** The included GitHub Actions workflow deploys the site on pushes to `main` and can also be run manually from the Actions tab. For a new repository, set **Settings → Pages → Build and deployment → Source** to **GitHub Actions**. Your game will be live at `https://<your-username>.github.io/<repo-name>/`.
 
 Desktop and mobile are supported. Hand tracking requires a webcam and works best in well-lit conditions.
 
